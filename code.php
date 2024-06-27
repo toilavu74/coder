@@ -388,4 +388,105 @@ add_shortcode('gallery_sfeer', 'gallery_sfeer');
 <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.0.0-beta.3/plugins/zoom/lg-zoom.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.0.0-beta.3/plugins/thumbnail/lg-thumbnail.umd.js"></script>
 
+<?php
+//AJAX SEARCH
+
+function custom_Formsearch(){
+    ob_start();
+    $content = ob_get_clean();
+    $gif = '/wp-content/uploads/2024/06/Spinner.gif';
+    $content .='<div class="custom-form">';
+    $content .='<form action="/" method="GET">';
+    $content .='<input type="text" placeholder="Search..." value="' . get_search_query() . '" name="s" id="s" />';
+    $content .='<button type="submit" id="searchsubmit"><i class="fa fa-search"></i></button>';
+    $content .='</form>';
+    $content .='<div id="search-container">';
+    $content .='<ul id="search-results"></ul>';
+    $content .='</div>';
+    $content .='</div>';
+    return $content;
+}
+add_shortcode('custom_Formsearch', 'custom_Formsearch');
+
+function ajax_search() {
+    $search_query = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+    $args = array(
+        'post_type' => 'product',
+        's' => $search_query
+    );
+    
+    $query = new WP_Query( $args );
+    
+    add_filter('posts_where', 'title_filter1', 10, 2);
+    function title_filter1( $where, &$wp_query ) {
+        global $wpdb;
+        if ( $search_term = $wp_query->get( 'title' ) ) {
+            $where .= ' AND ' . $wpdb->posts . '.post_title = "' . esc_sql( like_escape( $search_term ) ) . '"';
+        }
+        return $where;
+    }
+    
+    if( $query->have_posts() ) {
+        while( $query->have_posts() ) {
+            $query->the_post();
+            echo '<li><a href="' . get_permalink() . '">' . get_the_title() . '</a></li>';
+        }
+    } else {
+        echo '<li>No results found</li>';
+    }
+    wp_die();
+}
+
+add_action( 'wp_ajax_nopriv_ajax_search', 'ajax_search' );
+add_action( 'wp_ajax_ajax_search', 'ajax_search' );
+
+function enqueue_custom_search_script() {
+    wp_localize_script( 'ajax-search', 'ajaxsearch', array(
+        'ajax_url' => admin_url( 'admin-ajax.php' )
+    ));
+}
+
+add_action( 'wp_enqueue_scripts', 'enqueue_custom_search_script' );
+
+function hook_Footer(){
+    ?>
+    <script>
+        jQuery(document).ready(function($){
+            jQuery('#s').on('input', function() {
+                var searchField = jQuery(this).val();
+                var ajaxurl = '<?php echo admin_url("admin-ajax.php");?>';
+                if (searchField.length >= 1) {
+                    jQuery.ajax({
+                        type: 'GET',
+                        url: ajaxurl,
+                        data: {
+                            action: 'ajax_search',
+                            s: searchField
+                        },
+                        beforeSend: function(){
+                            jQuery("form").addClass("loading");
+                        },
+                        success: function(data) {
+                            jQuery('#search-results').html(data);
+                            jQuery('#search-results').addClass('show');
+                            jQuery("form").removeClass("loading");
+                        }
+                    });
+                } else {
+                    jQuery('#search-results').html('');
+                    jQuery('#search-results').removeClass('show');
+                }
+            });
+        });
+        jQuery(function($) {
+            // Lắng nghe sự kiện 'added_to_cart'
+            jQuery(document.body).on('added_to_cart', function() {
+                // Chuyển hướng tới trang giỏ hàng
+                window.location.href = '<?php echo esc_url( wc_get_cart_url() ); ?>';
+            });
+        });
+    </script>
+    <?php
+}
+add_action( 'wp_footer', 'hook_Footer' );
 
