@@ -1,5 +1,5 @@
-/* AJAX CAT PRODUCT */
 <?php 
+// AJAX CAT PRODUCT 
 add_shortcode('filter_ajax', 'filter_ajax');
 function filter_ajax()
 {
@@ -489,4 +489,124 @@ function hook_Footer(){
     <?php
 }
 add_action( 'wp_footer', 'hook_Footer' );
+
+// jquery tính tour
+
+<script>
+    jQuery('<div class="quantity-nav"><div class="quantity-button quantity-up">+</div><div class="quantity-button quantity-down">-</div></div>').insertAfter('.quantity input');
+    jQuery('.quantity').each(function() {
+        var spinner = jQuery(this),
+            input = spinner.find('input[type="number"]'),
+            btnUp = spinner.find('.quantity-up'),
+            btnDown = spinner.find('.quantity-down'),
+            min = input.attr('min'),
+            max = input.attr('max');
+
+        btnUp.click(function() {
+            var oldValue = parseFloat(input.val());
+            if (oldValue >= max) {
+                var newVal = oldValue;
+            } else {
+                var newVal = oldValue + 1;
+            }
+            spinner.find("input").val(newVal);
+            spinner.find("input").trigger("change");
+        });
+
+        btnDown.click(function() {
+            var oldValue = parseFloat(input.val());
+            if (oldValue <= min) {
+                var newVal = oldValue;
+            } else {
+                var newVal = oldValue - 1;
+            }
+            spinner.find("input").val(newVal);
+            spinner.find("input").trigger("change");
+        });
+
+    });
+    (function ($) {
+        jQuery(document).ready(function ($) {
+			
+			$('.sidebar').on('click', '.box-title-mobi', function () {
+				if($('.single-tours .sidebar').hasClass('active')){
+					$('.single-tours .sidebar').removeClass('active');
+				}else{
+					$('.single-tours .sidebar').addClass('active');
+				}
+			});
+	
+            number_format = function (number, decimals, dec_point, thousands_sep) {
+                number = number.toFixed(decimals);
+
+                var nstr = number.toString();
+                nstr += '';
+                x = nstr.split('.');
+                x1 = x[0];
+                x2 = x.length > 1 ? dec_point + x[1] : '';
+                var rgx = /(\d+)(\d{3})/;
+
+                while (rgx.test(x1))
+                    x1 = x1.replace(rgx, '$1' + thousands_sep + '$2');
+
+                return x1 + x2;
+            }
+            var currency = '$';
+            var priceold = 399;
+            var off_sale_adult = 5;
+            var off_sale_children = 40;
+            $('.quantity.adult').on('click', '.quantity-nav .quantity-button', function () {
+                var adult = $('.number-people .quantity.adult input').val();
+                var pricecorner = priceold * adult;
+                var price = priceold * adult;
+                if(adult > 2){
+                    for(i=3;i <= adult;i++){
+                        price = price - off_sale_adult;
+                    }
+                    var saleoff = pricecorner - price;
+                    saleoff = '('+saleoff+''+currency+' OFF)';
+                    $('.box-total .box.box-adult label i').css('display','inline-block');
+                    $('.box-total .box.box-adult label i').html(saleoff);
+                }else{
+                    price = priceold * adult;
+                    $('.box-total .box.box-adult label i').css('display','none');
+                }
+                var priceformat = number_format(price, 0, '.', '.');
+                var prices = currency+''+priceformat;
+                $('.box-total .box.box-adult .price').html(prices);
+                $('#totaladult').html(price);
+                var totaladult = parseInt($('#totaladult').text());
+                var totalchildren = parseInt($('#totalchildren').text());
+               // alert(totaladult);
+                var total = totaladult + totalchildren;
+              //  $('input#total').val(total);
+                var totalformat = number_format(total, 0, '.', '.');
+                var totals = currency+''+totalformat;
+                $('.box-total .box.box-total-submit .price').html(totals);
+            });
+            $('.quantity.children').on('click', '.quantity-nav .quantity-button', function () {
+                var adult = $('.number-people .quantity.children input').val();
+                if(adult > 0){
+                    var price = priceold - priceold*off_sale_children/100;
+                     price = price * adult;
+                    $('.box-total .box.box-children').css('display','flex');
+                }else{
+                    var price = priceold * adult;
+                    $('.box-total .box.box-children').css('display','none');
+                }
+                var priceformat = number_format(price, 0, '.', '.');
+                var prices = currency+''+priceformat;
+                $('.box-total .box.box-children .price').html(prices);
+                $('#totalchildren').html(price);
+                var totaladult = parseInt($('#totaladult').text());
+                var totalchildren = parseInt($('#totalchildren').text());
+                var total = totaladult + totalchildren;
+                //$('input#total').val(total);
+                var totalformat = number_format(total, 0, '.', '.');
+                var totals = currency+''+totalformat;
+                $('.box-total .box.box-total-submit .price').html(totals);
+            });
+        })
+    })(jQuery)
+</script>
 
